@@ -1,0 +1,20 @@
+[package]
+name = "pestast_derive"
+version = "0.1.0"
+edition = "2021"
+authors = ["Marc Fischer <marc.fischer@isw.uni-stuttgart.de>"]
+license = "MIT OR Apache-2.0"
+
+[lib]
+proc-macro = true
+
+
+[dependencies]
+pestast_gen = { path = "../generate" }
+syn = "2.0.48"
+
+
+[dev-dependencies]
+pest = "2.7.6"
+pest_derive = { version = "2.7.6", features = ["grammar-extras"] }
+pestast = { path = "../pestast" }

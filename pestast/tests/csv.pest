@@ -1,0 +1,4 @@
+file   = { SOI ~ ((record | drecord) ~ ("\r\n" | "\n"))* ~ EOI }
+record = { #field_first = field ~ ("," ~ field)* }
+field  = { (ASCII_DIGIT | "." | "-")+ }
+drecord = { "let = " ~ (field ~ "," )* ~ #field_last = field }

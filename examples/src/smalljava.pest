@@ -1,0 +1,58 @@
+smalljava   = { SOI ~ sj_class* ~ EOI }
+
+sj_class    = { "class" ~ identifier ~ "{" ~ sj_member* ~ "}" }
+
+sj_member   = { sj_field | sj_method }
+
+sj_field    = { identifier ~ identifier ~ ";" }
+
+sj_method   = { sj_typed_declaration ~ "(" ~ ( sj_parameter ~ ( "," ~ sj_parameter)*)? ~ ")" ~ sj_block }
+
+sj_parameter = { sj_typed_declaration }
+
+sj_block    = { "{" ~ sj_statement* ~ "}" }
+
+
+sj_statement = {    sj_variable_declaration | 
+                    sj_return | 
+                    sj_expression | 
+                    sj_if_statement }
+
+sj_variable_declaration = { sj_typed_declaration ~ "=" ~ sj_expression}
+
+sj_return = { "return" ~ sj_expression ~ ";" }
+
+sj_if_statement = {"if" ~ "(" ~ sj_expression ~ ")" ~ sj_if_block ~ ("else" ~ sj_if_block)? }
+
+sj_if_block = { sj_statement | sj_block }
+
+sj_expression = { sj_assignment }
+
+sj_assignment = {
+    sj_selection_expression ~ ("=" ~ sj_expression)? 
+}
+
+sj_selection_expression = {
+    sj_terminal_expression ~ ( "." ~ sj_member ~ ( "(" ~ ( sj_expression ~ ( "," ~ sj_expression)*)? ~ ")" )? )*
+}
+
+sj_terminal_expression = {
+    identifier | "true" | "false" | "this" | "null"
+}
+
+// for the time being, those are just two names
+// in the future, this should be typed
+sj_typed_declaration = { d_type ~ identifier }
+
+// @ stands for atomic; this rule has to be atomic s.t. two words (e.g. "foo bar") are not matched as one identifier
+identifier  = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+
+d_type      = @{ "int" | "bool" | "void" }
+string      = @{ "\"" ~ inner ~ "\"" }
+inner       = @{ (!("\"" | "\\") ~ ANY)* ~ (escape ~ inner)? }
+escape      = @{ "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t" | unicode) }
+unicode     = @{ "u" ~ ASCII_HEX_DIGIT{4} }
+
+
+// we need the whitespace rule s.t. newlines and whitespaces are discarded automatically
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
