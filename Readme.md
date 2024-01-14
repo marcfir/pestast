@@ -1,5 +1,8 @@
 # pestast
 
+[![pestast CI](https://github.com/marcfir/pestast/actions/workflows/ci.yml/badge.svg)](https://github.com/marcfir/pestast/actions/workflows/ci.yml)
+
+
 Pestast generates a static typed abstract syntax tree (AST) for your pest grammar. The generation is done in a separate `Ast` derive macro, which makes it very modular.
 
 > [!WARNING]
