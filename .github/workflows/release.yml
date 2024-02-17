@@ -1,0 +1,29 @@
+name: pestast Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    name: Publish crates on release
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - uses: katyo/publish-crates@v2
+        with:
+          path: "./pestast"
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - uses: katyo/publish-crates@v2
+        with:
+          path: "./generate"
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - uses: katyo/publish-crates@v2
+        with:
+          path: "./derive"
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
