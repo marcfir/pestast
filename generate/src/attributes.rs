@@ -52,6 +52,18 @@ impl Default for AstOptions {
     }
 }
 
+impl AstOptions {
+    pub fn get_derive_as_quote(&self) -> TokenStream {
+        match self.derives.is_empty() {
+            true => quote!(),
+            false => {
+                let d = &self.derives;
+                quote!(#[derive #d])
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct GenerateOptions {
     pub derive_for: Ident,

@@ -13,7 +13,7 @@ use quote::{format_ident, quote};
 
 use crate::{
 
-    abstracter::extract_idents, generate::ast::{rule2enumname_id, rule2structname_id, rule2_id},
+    abstracter::{extract_idents, RuleRefType}, generate::ast::{rule2_id, rule2enumname_id, rule2structname_id},
 };
 
 use crate::attributes::GenerateOptions;
@@ -28,32 +28,32 @@ pub fn generate_iterators(
         
         let nodename = rule2enumname_id(&fir.rule);
         let mut fields: Vec<_> = vec![];
-        let _: Vec<_> = fir.referenced_idents
+        let _: Vec<_> = fir.referred_rules
             .iter()
             .map(|fi| {
                 //Skip builtin ASCII and UTF8
-                if defaults.iter().any(|d| *d == fi.rule) {
+                if defaults.iter().any(|d| *d == fi.referred_rule) {
                     return;
                 }
                 let name = match &fi.is_tag {
-                    None => rule2_id(&fi.rule),
+                    None => rule2_id(&fi.referred_rule),
                     Some(tag) => rule2_id( tag),
                 };
-                let id_nodename = rule2enumname_id(&fi.rule);
+                let id_nodename = rule2enumname_id(&fi.referred_rule);
                 match fi.ty {
-                    crate::abstracter::FlatIdentType::Repetition => {
+                    RuleRefType::Repetition => {
                         fields.push(quote!(for el in inner.#name.into_iter() {
                             flat_vec.append(&mut recursive_flattening(#enumname::#id_nodename(el)));
                         }));
                     }
-                    crate::abstracter::FlatIdentType::Choice =>{
+                    RuleRefType::Choice =>{
                         fields.push(quote!(
                             if let Some(#name) = inner.#name {
                                 flat_vec.append(&mut recursive_flattening(#enumname::#id_nodename(#name)));
                             }
                         ));
                     },
-                    crate::abstracter::FlatIdentType::Single =>{
+                    RuleRefType::Single =>{
                         fields.push(quote!(
                             flat_vec.append(&mut recursive_flattening(#enumname::#id_nodename(*inner.#name)));
                         ));

@@ -1,6 +1,6 @@
 smalljava   = { SOI ~ sj_class* ~ EOI }
 
-sj_class    = { "class" ~ identifier ~ "{" ~ sj_member* ~ "}" }
+sj_class    = { "class" ~ identifier ~ "{" ~ #members = sj_member* ~ "}" }
 
 sj_member   = { sj_field | sj_method }
 
@@ -18,7 +18,7 @@ sj_statement = {    sj_variable_declaration |
                     sj_expression | 
                     sj_if_statement }
 
-sj_variable_declaration = { sj_typed_declaration ~ "=" ~ sj_expression}
+sj_variable_declaration = { sj_typed_declaration ~ "=" ~ sj_expression }
 
 sj_return = { "return" ~ sj_expression ~ ";" }
 

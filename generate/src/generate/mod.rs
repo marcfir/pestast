@@ -13,7 +13,7 @@ mod iterators;
 use crate::{
     attributes::GenerateOptions,
     docs::{self, DocComment},
-    generate::ast::{generate_enumwrapper, generate_makeast, generate_structs},
+    generate::ast::{generate_as_ast, generate_enumwrapper, generate_structs},
 };
 
 pub use iterators::generate_iterators;
@@ -37,7 +37,7 @@ pub fn generate_workbench(
     validate_grammar(&rules, opts, inp)?;
     let structs = generate_structs(&rules, &defaults, &docs, opts);
     let enumwrapper = generate_enumwrapper(&rules, opts);
-    let makeast = generate_makeast(&rules, &defaults, opts);
+    let makeast = generate_as_ast(&rules, &defaults, opts);
     let iterators = generate_iterators(&rules, &defaults, opts);
 
     Ok(quote!(

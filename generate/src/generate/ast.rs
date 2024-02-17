@@ -12,7 +12,7 @@ use pest_meta::{ast::RuleType, optimizer::OptimizedRule};
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 
-use crate::abstracter::extract_idents;
+use crate::abstracter::{extract_idents, RuleRefType};
 use crate::attributes::GenerateOptions;
 use crate::docs::DocComment;
 
@@ -58,26 +58,26 @@ pub fn generate_structs(
 
             let mut fields: Vec<_> = vec![];
             let _: Vec<_> = fir
-                .referenced_idents
+                .referred_rules
                 .iter()
                 .map(|fi| {
                     //Skip builtin ASCII and UTF8
-                    if defaults.iter().any(|d| *d == fi.rule) {
+                    if defaults.iter().any(|d| *d == fi.referred_rule) {
                         return;
                     }
                     let name = match &fi.is_tag {
-                        None => rule2_id(&fi.rule),
+                        None => rule2_id(&fi.referred_rule),
                         Some(tag) => rule2_id(tag),
                     };
-                    let astname = rule2structname_id(&fi.rule, opts);
+                    let astname = rule2structname_id(&fi.referred_rule, opts);
                     match fi.ty {
-                        crate::abstracter::FlatIdentType::Repetition => {
+                        RuleRefType::Repetition => {
                             fields.push(quote!(#vis #name: Vec<#astname<'i>>));
                         }
-                        crate::abstracter::FlatIdentType::Choice => {
+                        RuleRefType::Choice => {
                             fields.push(quote!(#vis #name: Option<#astname<'i>>));
                         }
-                        crate::abstracter::FlatIdentType::Single => {
+                        RuleRefType::Single => {
                             fields.push(quote!(#vis #name: Box<#astname<'i>>));
                         }
                     }
@@ -89,11 +89,7 @@ pub fn generate_structs(
 
             fields.push(quote!(#vis astspan: pestast::AstSpan<'i>));
 
-            let mut derives = quote!();
-            if !opts.ast.derives.is_empty() {
-                let d = &opts.ast.derives;
-                derives = quote!(#[derive #d]);
-            }
+            let derives = opts.ast.get_derive_as_quote();
             let doc: TokenStream = match docs.line_docs.get(&fir.rule) {
                 Some(doc) => {
                     quote!(#[doc=#doc])
@@ -140,7 +136,7 @@ pub fn generate_enumwrapper(optrules: &[OptimizedRule], opts: &GenerateOptions) 
     )
 }
 
-pub fn generate_makeast(
+pub fn generate_as_ast(
     optrules: &[OptimizedRule],
     defaults: &[&str],
     opts: &GenerateOptions,
@@ -151,27 +147,26 @@ pub fn generate_makeast(
         .iter()
         .map(|fir| {
             let structname = rule2structname_id(&fir.rule, opts);
-            // let mut convert_inloop: Vec<_> = vec![];
             let mut convert_inloop_rule: Vec<_> = vec![];
             let mut convert_inloop_tag: Vec<_> = vec![];
             let mut convert_defs: Vec<_> = vec![];
             let mut convert_after: Vec<_> = vec![];
             let mut fields: Vec<_> = vec![];
             let _: Vec<_> = fir
-                .referenced_idents
+                .referred_rules
                 .iter()
                 .map(|fi| {
                     //Skip builtin ASCII and UTF8
-                    if defaults.iter().any(|d| *d == fi.rule) {
+                    if defaults.iter().any(|d| *d == fi.referred_rule) {
                         return;
                     }
                     let name_inner = rule2_id_inner(fi.get_effective_name());
                     let name = rule2_id(fi.get_effective_name());
-                    let name_fnname = rule2_fn_rule2ast(&fi.rule);
+                    let name_fnname = rule2_fn_rule2ast(&fi.referred_rule);
                     let name_rule_pest = rule2_id_pest(fi.get_effective_name());
                     let name_child_str = fi.get_effective_name();
                     match fi.ty {
-                        crate::abstracter::FlatIdentType::Repetition => {
+                        RuleRefType::Repetition => {
                             convert_defs.push(quote!(let mut #name_inner = vec![];));
                             if fi.is_tag.is_some() {
                                 convert_inloop_tag.push(
@@ -188,7 +183,7 @@ pub fn generate_makeast(
                             }
                             fields.push(quote!(#name:#name_inner));
                         }
-                        crate::abstracter::FlatIdentType::Choice => {
+                        RuleRefType::Choice => {
                             convert_defs.push(quote!(let mut #name_inner = None;));
                             if fi.is_tag.is_some() {
                                 convert_inloop_tag.push(
@@ -205,7 +200,7 @@ pub fn generate_makeast(
                             }
                             fields.push(quote!(#name:#name_inner));
                         }
-                        crate::abstracter::FlatIdentType::Single => {
+                        RuleRefType::Single => {
                             convert_defs.push(quote!(let mut #name_inner = None;));                            
                             if fi.is_tag.is_some() {
                                 convert_inloop_tag.push(
@@ -364,7 +359,7 @@ mod tests {
             ty: pest_meta::ast::RuleType::CompoundAtomic,
             expr: OptimizedExpr::Ident("XY".to_string()),
         }];
-        let _t = generate_structs(
+        let t = generate_structs(
             &rules,
             &[],
             &DocComment {
@@ -373,7 +368,19 @@ mod tests {
             },
             &options,
         );
+        assert_eq!(
+            t.to_string(),
+            quote!(
+                #[allow(unused_variables)]
+                pub struct Test<'i> {
+                    pub xy: Box<Xy<'i>>,
+                    pub astspan: pestast::AstSpan<'i>,
+                }
+            )
+            .to_string()
+        );
     }
+
     #[test]
     fn gen_structs_2() {
         let gram = r#"
@@ -399,7 +406,46 @@ mod tests {
         };
         let (opt, defaults, docs) = parse_grammar(gram).unwrap();
         let t = generate_structs(&opt, &defaults, &docs, &options);
-        println!("{:#}", t);
+        println!("{}", pretty(t.clone()));
+        assert_eq!(
+            t.to_string(),
+            quote!(
+                #[allow(unused_variables)]
+                pub struct PestAstMain<'i> {
+                    pub mytag: Box<PestAstId<'i>>,
+                    pub astspan: pestast::AstSpan<'i>,
+                }
+                #[allow(unused_variables)]
+                pub struct PestAstId<'i> {
+                    pub content: String,
+                    pub astspan: pestast::AstSpan<'i>,
+                }
+                #[doc = "tt\nPestAst(parse)"]
+                #[allow(unused_variables)]
+                pub struct PestAstInteger<'i> {
+                    pub content: String,
+                    pub astspan: pestast::AstSpan<'i>,
+                }
+                #[allow(unused_variables)]
+                pub struct PestAstString<'i> {
+                    pub content: String,
+                    pub astspan: pestast::AstSpan<'i>,
+                }
+                #[allow(unused_variables)]
+                pub struct PestAstBoolean<'i> {
+                    pub content: String,
+                    pub astspan: pestast::AstSpan<'i>,
+                }
+                #[allow(unused_variables)]
+                pub struct PestAstValue<'i> {
+                    pub boolean: Option<PestAstBoolean<'i>>,
+                    pub integer: Option<PestAstInteger<'i>>,
+                    pub string: Option<PestAstString<'i>>,
+                    pub astspan: pestast::AstSpan<'i>,
+                }
+            )
+            .to_string()
+        );
     }
 
     #[test]
@@ -414,8 +460,8 @@ mod tests {
             ..Default::default()
         };
         let (opt, _, _) = parse_grammar(GRAMMAR).unwrap();
-        let t = generate_enumwrapper(&opt, &options);
-        println!("{:#}", t);
+        let _t = generate_enumwrapper(&opt, &options);
+        // TODO: Add assert!
     }
 
     #[test]
@@ -430,8 +476,8 @@ mod tests {
             ..Default::default()
         };
         let (opt, _, _) = parse_grammar(GRAMMAR).unwrap();
-        let t = generate_makeast(&opt, &[], &options);
-        println!("{:#}", t);
+        let _t = generate_as_ast(&opt, &[], &options);
+        // TODO: Add assert!
     }
 
     #[test]
@@ -458,9 +504,9 @@ mod tests {
             ..Default::default()
         };
         let (opt, defaults, docs) = parse_grammar(gram).unwrap();
-        let enumw = pretty(generate_enumwrapper(&opt, &options));
-        let structs = pretty(generate_structs(&opt, &defaults, &docs, &options));
-        let make = pretty(generate_makeast(&opt, &defaults, &options));
-        println!("{:#}{:#}{:#}", enumw, structs, make);
+        let _enumw = pretty(generate_enumwrapper(&opt, &options));
+        let _structs = pretty(generate_structs(&opt, &defaults, &docs, &options));
+        let _make = pretty(generate_as_ast(&opt, &defaults, &options));
+        // TODO: Add assert!
     }
 }
