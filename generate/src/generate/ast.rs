@@ -14,7 +14,7 @@ use quote::{format_ident, quote};
 
 use crate::abstracter::{extract_idents, RuleRefType};
 use crate::attributes::GenerateOptions;
-use crate::docs::DocComment;
+use pest_generator::docs::DocComment;
 
 pub fn rule2structname_id(name: &str, opts: &GenerateOptions) -> Ident {
     format_ident!(

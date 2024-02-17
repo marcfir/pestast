@@ -1,17 +1,20 @@
 [package]
 name = "pestast"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-authors = ["Marc Fischer <marc.fischer@isw.uni-stuttgart.de>"]
+authors = ["Marc Fischer <marcfir@proton.me>"]
 license = "MIT OR Apache-2.0"
 description = "Convert a pest grammar into a typed AST"
-
+keywords = ["pest", "parser", "ast", "grammar"]
+categories = ["parsing"]
+repository = "https://github.com/marcfir/pestast"
+rust-version = "1.65"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 thiserror = "1.0"
-pest = "2.7.6"
+pest = "2.7.7"
 pestast_derive = { path = "../derive" }
 
 [dev-dependencies]
-pest_derive = { version = "2.7.6", features = ["grammar-extras"] }
+pest_derive = { version = "2.7.7", features = ["grammar-extras"] }

@@ -1,21 +1,31 @@
 [package]
 name = "pestast_gen"
-version = "0.1.0"
+description = "pestast code generator"
+version = "0.2.0"
 edition = "2021"
-authors = ["Marc Fischer <marc.fischer@isw.uni-stuttgart.de>"]
+authors = ["Marc Fischer <marcfir@proton.me>"]
 license = "MIT OR Apache-2.0"
+keywords = ["pest", "parser", "ast", "grammar"]
+categories = ["parsing"]
+repository = "https://github.com/marcfir/pestast"
+rust-version = "1.65"
 
 [dependencies]
 syn = { version = "2.0", features = ["printing", "full", "extra-traits"] }
-proc-macro2-diagnostics = "0.10.1"
+proc-macro2-diagnostics = "0.10"
 proc-macro2 = "1.0"
 quote = "1.0"
 log = "0.4"
 thiserror = "1.0"
-pest_meta = { version = "2.7.6", features = ["grammar-extras"] }
-pest = "2.7.6"
-heck = "0.4.1"
+pest_meta = { version = "2.7.7", features = ["grammar-extras"] }
+pest_generator = { version = "2.7.7", features = [
+    "grammar-extras",
+    "export-internal",
+    "std",
+] }
+pest = "2.7.7"
+heck = "0.4"
 prettyplease = "0.2"
 
 [dev-dependencies]
-pest_derive = { version = "2.7.6", features = ["grammar-extras"] }
+pest_derive = { version = "2.7.7", features = ["grammar-extras"] }

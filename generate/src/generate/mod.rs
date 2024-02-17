@@ -12,11 +12,16 @@ mod iterators;
 
 use crate::{
     attributes::GenerateOptions,
-    docs::{self, DocComment},
+    // docs::{self, DocComment},
     generate::ast::{generate_as_ast, generate_enumwrapper, generate_structs},
 };
 
 pub use iterators::generate_iterators;
+use pest_generator::{
+    docs::{self, DocComment},
+    // generator::generate,
+    // parse_derive::ParsedDerive,
+};
 use pest_meta::{
     ast::RuleType,
     optimizer::{self, OptimizedRule},

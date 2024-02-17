@@ -14,7 +14,6 @@ mod attributes;
 use attributes::parse_attributes;
 
 mod abstracter;
-mod docs;
 mod generate;
 mod grammar;
 use grammar::load_grammar;
